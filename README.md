@@ -52,7 +52,8 @@ ou pressione **F5**.
 
 ---
 ## Nossa Equipe
-
-- Denise Hollanda  
-- João Victor Astle  
-- Maria Luiza Melo  
+ 
+- João Victor Astle
+- Ana Beatriz Astle  
+- Maria Luiza Melo
+- Caio  
