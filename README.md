@@ -30,8 +30,35 @@ Este projeto foi criado para:
 
 ## Como Rodar o Projeto
 
-### 1. Clonar o repositório
+### **1. Clonar o repositório**
 
 ```bash
-git clone https://github.com/joaoastle/Jogo-da-Velha-MIPS.git
-cd Jogo-da-Velha-MIPS
+git clone (https://github.com/malupmelo/Jogo-Batalha-Naval.git)
+cd Jogo-Batalha-Naval
+```
+
+### **2. Compilar o projeto**
+
+```bash
+make
+```
+
+### **3. Executar o projeto**
+
+```bash
+./battleship
+```
+
+### **4. Limpar arquivos compilados**
+
+```bash
+make clean
+```
+
+---
+
+## Nossa Equipe
+
+- Denise Hollanda  
+- João Victor Astle  
+- Maria Luiza Melo  
