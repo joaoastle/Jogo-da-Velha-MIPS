@@ -1,27 +1,29 @@
-.include "board.asm"
-.include "input.asm"
+    .include "board.asm"
+    .include "input.asm"
+    .include "rules.asm"
+    .include "arquitetura.asm"
 
-.data
-msgStart: .asciiz "=== Jogo da Velha em MIPS ===\n"
-msgTurnX: .asciiz "Vez do jogador X\n"
-msgTurnO: .asciiz "Vez do jogador O\n"
+    .data
+tabuleiro:  .space 9       
+msg_inicio: .asciiz "\n=== JOGO DA VELHA ===\n"
+msg_turnoX: .asciiz "\nVez do jogador X\n"
+msg_turnoO: .asciiz "\nVez do jogador O\n"
+msg_final:  .asciiz "\nJogo encerrado!\n"
+msg_empate: .asciiz "\nEmpate! Deu velha!\n"
 
-.text
+    .text
+    .globl main
+
 main:
-    li $v0, 4
-    la $a0, msgStart
-    syscall
-
-    jal initBoard
-
-game_loop:
-    jal printBoard
+    la $a0, tabuleiro
+    jal limpar_tabuleiro
 
     li $v0, 4
-    la $a0, msgTurnX
+    la $a0, msg_inicio
     syscall
 
+    li $s0, JOGADOR_X
 
-    j game_loop     
+loop
 
 

@@ -1,52 +1,18 @@
-.data
-board: .space 9     
+    .text
 
-.text
+limpar_tabuleiro:
+    li $t0, 0
 
-initBoard:
-    li $t0, 0              
-    la $t1, board          
-
-init_loop:
-    li $t2, '-'            
-    sb $t2, 0($t1)         
-
-    addi $t1, $t1, 1       
-    addi $t0, $t0, 1       
-    blt $t0, 9, init_loop  
-
-    jr $ra
-
-
-printBoard:
-    la $t0, board      
-    li $t1, 0          
-
-print_loop:
-    lb $a0, 0($t0)     
-    li $v0, 11         
-    syscall
-
-    li $a0, ' '
-    li $v0, 11
-    syscall
-
+loop_clear:
+    beq $t0, 9, fim_clear
+    sb $zero, 0($a0)
+    addi $a0, $a0, 1
     addi $t0, $t0, 1
-    addi $t1, $t1, 1
+    j loop_clear
 
-    rem $t2, $t1, 3
-    bne $t2, 0, continue
-
-    li $a0, '\n'
-    li $v0, 11
-    syscall
-
-continue:
-    blt $t1, 9, print_loop
-
-    li $a0, '\n'
-    li $v0, 11
-    syscall
-
+fim_clear:
     jr $ra
 
+
+mostrar_tabuleiro:
+    jr $ra
