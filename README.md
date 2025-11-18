@@ -1,4 +1,3 @@
-```markdown
 # JOGO DA VELHA – MIPS Assembly (MARS)  
 Implementação do clássico **Jogo da Velha (Tic-Tac-Toe)** utilizando **Assembly MIPS**, no simulador **MARS**. Projeto para a disciplina **Infraestrutura de Hardware**.
 
@@ -31,34 +30,8 @@ Este projeto foi criado para:
 
 ## Como Rodar o Projeto
 
-### **1. Clonar o repositório**
+### 1. Clonar o repositório
 
 ```bash
 git clone https://github.com/joaoastle/Jogo-da-Velha-MIPS.git
 cd Jogo-da-Velha-MIPS
-```
-
-### **2. Abrir no MARS**
-
-No MARS:
-
-1. File → Open  
-2. Selecione `main.asm`
-
-### **3. Executar**
-
-Clique no botão:  
-▶ **Run**  
-ou pressione **F5**.
-
----
-
-## Nossa Equipe
-
-- João Victor Astle
-- Ana Beatriz Astle  
-- Maria Luiza Melo
-- Caio 
-
----
-```
