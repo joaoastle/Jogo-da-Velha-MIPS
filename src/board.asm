@@ -1,18 +1,23 @@
-    .text
+.data
+board: .space 9        
+dotChar: .byte '.'
 
-limpar_tabuleiro:
-    li $t0, 0
+.text
+.globl initBoard
+.globl printBoard
 
-loop_clear:
-    beq $t0, 9, fim_clear
-    sb $zero, 0($a0)
-    addi $a0, $a0, 1
+initBoard:
+    la $t0, board
+    lb $t1, dotChar
+    li $t2, 9            
+
+fill_loop:
+    sb $t1, 0($t0)
     addi $t0, $t0, 1
-    j loop_clear
-
-fim_clear:
+    subi $t2, $t2, 1
+    bgtz $t2, fill_loop
     jr $ra
 
 
-mostrar_tabuleiro:
+printBoard:
     jr $ra

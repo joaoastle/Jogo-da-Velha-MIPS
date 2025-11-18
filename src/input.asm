@@ -1,6 +1,7 @@
-    .text
+.text
+.globl readMove
 
-ler_e_validar_jogada:
+readMove:
     jr $ra
 
 

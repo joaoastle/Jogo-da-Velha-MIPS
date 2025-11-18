@@ -1,3 +1,11 @@
-    .eqv JOGADOR_X 1
-    .eqv JOGADOR_O 2
+.data
+infoMsg: .asciiz "Arquitetura do projeto carregada.\n"
 
+.text
+.globl printArchitectureInfo
+
+printArchitectureInfo:
+    li $v0, 4
+    la $a0, infoMsg
+    syscall
+    jr $ra
