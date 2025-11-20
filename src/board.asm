@@ -20,4 +20,30 @@ fill_loop:
 
 
 printBoard:
+    la $t0, board         
+    li $t1, 0             
+
+print_loop:
+    lb $a0, 0($t0)        
+    li $v0, 11            
+    syscall
+
+    li $v0, 11
+    li $a0, ' '
+    syscall
+
+    addi $t0, $t0, 1      
+    addi $t1, $t1, 1
+
+    rem $t2, $t1, 3
+    bnez $t2, continue_print
+
+    li $v0, 11
+    li $a0, '\n'
+    syscall
+
+continue_print:
+    blt $t1, 9, print_loop
+
     jr $ra
+
