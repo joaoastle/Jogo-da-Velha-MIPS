@@ -1,5 +1,6 @@
 .data
-board: .space 9        
+board: .space 9 
+currentPlayer: .byte 'X'
 dotChar: .byte '.'
 
 .text
