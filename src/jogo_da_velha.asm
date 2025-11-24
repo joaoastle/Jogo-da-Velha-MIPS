@@ -275,14 +275,22 @@ next_row:
     blt $t1, 9, check_rows
 
 ############################################################
-# Colunas
+# Colunas 
 ############################################################
-    li $t1, 0
-
 check_cols:
-    lb $t3, 0($t0+$t1)
-    lb $t4, 3($t0+$t1)
-    lb $t5, 6($t0+$t1)
+    li $t1, 0               # coluna atual
+
+col_loop:
+    la $t0, board
+
+    add $t2, $t0, $t1       # célula (0, col)
+    lb $t3, 0($t2)
+
+    addi $t2, $t2, 3        # célula (1, col)
+    lb $t4, 0($t2)
+
+    addi $t2, $t2, 3        # célula (2, col)
+    lb $t5, 0($t2)
 
     beq $t3, $t7, next_col
     bne $t3, $t4, next_col
@@ -293,7 +301,7 @@ check_cols:
 
 next_col:
     addi $t1, $t1, 1
-    blt $t1, 3, check_cols
+    blt $t1, 3, col_loop
 
 ############################################################
 # Diagonal principal
