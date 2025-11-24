@@ -32,4 +32,12 @@ read_col:
     bgt  $t1, 2, invalid_input
 
     move $v0, $t0
-    mo
+    move $v1, $t1
+    jr $ra
+
+invalid_input:
+    li $v0, 4
+    la $a0, invalidMsg
+    syscall
+    j read_row
+
