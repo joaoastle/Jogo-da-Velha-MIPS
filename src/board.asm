@@ -10,7 +10,7 @@ dotChar: .byte '.'
 initBoard:
     la $t0, board
     lb $t1, dotChar
-    li $t2, 9            
+    li $t2, 9           
 
 fill_loop:
     sb $t1, 0($t0)
