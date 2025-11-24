@@ -107,15 +107,14 @@ someone_won:
 initBoard:
     la $t0, board
     lb $t1, dotChar
-    li $t2, 9
+    li $t2, 9          # contador de 9 casas
 
 fill_loop:
-    sb $t1, 0($t0)
-    addi $t0, $t0, 1
-    subi $t2, $t2, 1
+    sb $t1, 0($t0)     # escreve '.'
+    addi $t0, $t0, 1   # avança no tabuleiro
+    addi $t2, $t2, -1  # decrementa contador
     bgtz $t2, fill_loop
     jr $ra
-
 
 
 ############################################################
