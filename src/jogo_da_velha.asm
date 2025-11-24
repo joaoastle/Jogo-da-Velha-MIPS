@@ -1,166 +1,158 @@
-############################################################
-# JOGO DA VELHA — MIPS
-# Arquivo único: jogo_da_velha.asm
-# Versão corrigida e testada (uso de lbu, sll/sub para índice, addi -1)
-############################################################
-
 .data
-welcomeMsg:      .asciiz "=== JOGO DA VELHA MIPS ===\n"
-turnMsg:         .asciiz "Vez do jogador: "
-victoryMsg:      .asciiz "\nFIM DE JOGO! Jogador venceu: "
-newline:         .asciiz "\n"
-
-board:           .space 9
-currentPlayer:   .byte 'X'
-dotChar:         .byte '.'
-
-askRowMsg:       .asciiz "Digite a linha (0-2): "
-askColMsg:       .asciiz "Digite a coluna (0-2): "
-invalidMsg:      .asciiz "Entrada invalida! Tente novamente.\n"
-occupiedMsg:     .asciiz "Espaco ocupado! Jogue novamente.\n"
+board:      .space 9        # 3x3
+msgStart:   .asciiz "\n====================\n   JOGO DA VELHA\n====================\n"
+msgTurn:    .asciiz "\nVez do jogador: "
+msgLinha:   .asciiz "\nLinha (1 a 3): "
+msgColuna:  .asciiz "\nColuna (1 a 3): "
+msgInval:   .asciiz "\nJogada invalida! Tente novamente.\n"
+msgWinner:  .asciiz "\nVencedor: "
+msgTie:     .asciiz "\nEmpate!\n"
+nl:         .asciiz "\n"
 
 .text
-.globl main
-
-############################################################
-# MAIN
-############################################################
 main:
-    li $v0, 4
-    la $a0, welcomeMsg
-    syscall
+    # Inicializa tabuleiro com '.'
+    la $t0, board
+    li $t1, 9
+init_loop:
+    li $t2, '.'
+    sb $t2, 0($t0)
+    addi $t0, $t0, 1
+    addi $t1, $t1, -1
+    bnez $t1, init_loop
 
-    jal initBoard
+    # Jogador inicial = 'X'
+    li $s0, 'X'
 
 game_loop:
+    # Imprime tabuleiro
     jal printBoard
 
-    # Mostrar jogador atual
+readMove:
+    # Mensagem do jogador
     li $v0, 4
-    la $a0, turnMsg
+    la $a0, msgTurn
     syscall
 
-    la $t0, currentPlayer
-    lb $a0, 0($t0)
     li $v0, 11
+    move $a0, $s0
     syscall
 
+    # Quebra de linha após jogador
     li $v0, 4
-    la $a0, newline
+    la $a0, nl
     syscall
 
-    # Ler jogada
-    jal readMove
-    move $t2, $v0    # linha
-    move $t3, $v1    # coluna
+    # Linha
+    li $v0, 4
+    la $a0, msgLinha
+    syscall
+    li $v0, 5
+    syscall
+    addi $t1, $v0, -1    # ajustar índice 0-2
 
-    # Verificar célula ocupada
-    move $a0, $t2
-    move $a1, $t3
-    jal checkCellEmpty
-    beq $v0, $zero, cell_taken
+    # Coluna
+    li $v0, 4
+    la $a0, msgColuna
+    syscall
+    li $v0, 5
+    syscall
+    addi $t2, $v0, -1    # ajustar índice 0-2
 
-    # Fazer jogada
-    la $t0, currentPlayer
-    lb $t1, 0($t0)
+    # Validação
+    blt $t1, 0, invalid
+    bgt $t1, 2, invalid
+    blt $t2, 0, invalid
+    bgt $t2, 2, invalid
 
-    move $a0, $t2
-    move $a1, $t3
-    move $a2, $t1
-    jal placeMove
+    # índice = linha*3 + coluna
+    mul $t3, $t1, 3
+    add $t3, $t3, $t2
 
-    # DEBUG (opcional): imprime o caractere gravado na célula
-    # --- você pode comentar estas 4 linhas depois que testar ---
-    # compute index and print saved char
-    # sll $t4, $t2, 2
-    # sub $t4, $t4, $t2
-    # add $t4, $t4, $t3
-    # la $t5, board
-    # add $t5, $t5, $t4
-    # lbu $a0, 0($t5)
-    # li $v0, 11
-    # syscall
-    # li $v0, 4
-    # la $a0, newline
-    # syscall
-    # ---------------------------------------------------------
+    # endereço do board
+    la $t4, board
+    add $t4, $t4, $t3
 
-    # Verificar vitória
-    jal checkVictory
-    beq $v0, 1, someone_won
+    # verifica vazio
+    lb $t5, 0($t4)
+    li $t6, '.'
+    bne $t5, $t6, invalid
 
-    # Trocar jogador
-    jal switchPlayer
+    # grava X ou O
+    sb $s0, 0($t4)
 
+    # checa vencedor
+    jal checkWinner
+    bne $v0, $zero, winner_found
+
+    # checa empate
+    jal checkTie
+    bne $v0, $zero, tie_game
+
+    # alterna jogador
+    li $t7, 'X'
+    beq $s0, $t7, switchO
+    li $s0, 'X'
     j game_loop
 
-
-cell_taken:
-    li $v0, 4
-    la $a0, occupiedMsg
-    syscall
+switchO:
+    li $s0, 'O'
     j game_loop
 
-
-someone_won:
+invalid:
     li $v0, 4
-    la $a0, victoryMsg
+    la $a0, msgInval
     syscall
+    j readMove
 
-    la $t0, currentPlayer
-    lb $a0, 0($t0)
+winner_found:
+    li $v0, 4
+    la $a0, msgWinner
+    syscall
     li $v0, 11
+    move $a0, $s0
     syscall
-
-    li $v0, 10
+    li $v0, 4
+    la $a0, nl
     syscall
+    j exit
+
+tie_game:
+    li $v0, 4
+    la $a0, msgTie
+    syscall
+    j exit
 
 
-############################################################
-# INIT BOARD — preencher com '.'
-############################################################
-initBoard:
-    la $t0, board
-    lbu $t1, dotChar
-    li $t2, 9
-
-fill_loop:
-    sb $t1, 0($t0)
-    addi $t0, $t0, 1
-    addi $t2, $t2, -1
-    bgtz $t2, fill_loop
-    jr $ra
-
-
-############################################################
-# PRINT BOARD — versão robusta
-############################################################
+###########################
+# PRINT BOARD
+###########################
 printBoard:
+    li $v0, 4
+    la $a0, msgStart
+    syscall
+
     la $t0, board
     li $t1, 0
-
 print_loop:
-    lbu $a0, 0($t0)
+    lb $t2, 0($t0)
+
     li $v0, 11
+    move $a0, $t2
     syscall
 
-    # espaço
+    li $v0, 11
     li $a0, ' '
-    li $v0, 11
     syscall
 
-    addi $t0, $t0, 1
     addi $t1, $t1, 1
+    addi $t0, $t0, 1
 
-    # calcular remainder t1 % 3 usando div/mfhi
-    li $t6, 3
-    div $t1, $t6
-    mfhi $t2          # t2 = t1 % 3
-    bnez $t2, continue_print
+    rem $t3, $t1, 3
+    bne $t3, 0, continue_print
 
-    # imprimir newline (ASCII 10) usando syscall 11
-    li $a0, 10
-    li $v0, 11
+    li $v0, 4
+    la $a0, nl
     syscall
 
 continue_print:
@@ -168,172 +160,94 @@ continue_print:
     jr $ra
 
 
-############################################################
-# READ MOVE — Lê linha e coluna válidas
-############################################################
-readMove:
-read_row:
-    li $v0, 4
-    la $a0, askRowMsg
-    syscall
-
-    li $v0, 5
-    syscall
-    move $t0, $v0
-
-    bltz $t0, invalid_input
-    bgt  $t0, 2, invalid_input
-
-read_col:
-    li $v0, 4
-    la $a0, askColMsg
-    syscall
-
-    li $v0, 5
-    syscall
-    move $t1, $v0
-
-    bltz $t1, invalid_input
-    bgt  $t1, 2, invalid_input
-
-    move $v0, $t0    # linha
-    move $v1, $t1    # coluna
-    jr $ra
-
-invalid_input:
-    li $v0, 4
-    la $a0, invalidMsg
-    syscall
-    j read_row
-
-
-############################################################
-# CHECK CELL EMPTY
-############################################################
-checkCellEmpty:
-    # index = a0*3 + a1  (estável: sll/sub)
-    la $t0, board
-    sll $t2, $a0, 2
-    sub $t2, $t2, $a0
-    add $t2, $t2, $a1
-    add $t0, $t0, $t2
-
-    lbu $t3, 0($t0)
-    lbu $t4, dotChar
-
-    seq $v0, $t3, $t4   # v0 = 1 se igual
-    jr $ra
-
-
-############################################################
-# PLACE MOVE
-############################################################
-placeMove:
-    # index calculation stable (sll/sub)
-    la $t0, board
-    sll $t2, $a0, 2
-    sub $t2, $t2, $a0
-    add $t2, $t2, $a1
-    add $t0, $t0, $t2
-
-    sb $a2, 0($t0)
-    jr $ra
-
-
-############################################################
-# SWITCH PLAYER
-############################################################
-switchPlayer:
-    la $t0, currentPlayer
-    lb $t1, 0($t0)
-
-    li $t2, 'X'
-    beq $t1, $t2, switch_to_O
-
-    li $t3, 'X'
-    sb $t3, 0($t0)
-    jr $ra
-
-switch_to_O:
-    li $t3, 'O'
-    sb $t3, 0($t0)
-    jr $ra
-
-
-############################################################
-# CHECK VICTORY (linhas, colunas e diagonais)
-############################################################
-checkVictory:
-    lbu $t7, dotChar
+###########################
+# CHECK WINNER
+###########################
+checkWinner:
     la $t0, board
 
-    # Linhas
+    # verifica linhas
     li $t1, 0
-
-check_rows:
-    add $t2, $t0, $t1
-    lbu $t3, 0($t2)
-    lbu $t4, 1($t2)
-    lbu $t5, 2($t2)
-
-    beq $t3, $t7, next_row
-    bne $t3, $t4, next_row
-    bne $t3, $t5, next_row
-
+check_lines:
+    lb $t2, 0($t0)
+    lb $t3, 1($t0)
+    lb $t4, 2($t0)
+    li $t5, '.'
+    beq $t2, $t5, next_line
+    bne $t2, $t3, next_line
+    bne $t2, $t4, next_line
     li $v0, 1
     jr $ra
-
-next_row:
-    addi $t1, $t1, 3
-    blt $t1, 9, check_rows
-
-    # Colunas
-    li $t1, 0
-
-col_loop:
-    la $t2, board
-    add $t2, $t2, $t1       # point to board + col_index
-    lbu $t3, 0($t2)         # [0][col]
-    addi $t2, $t2, 3
-    lbu $t4, 0($t2)         # [1][col]
-    addi $t2, $t2, 3
-    lbu $t5, 0($t2)         # [2][col]
-
-    beq $t3, $t7, next_col
-    bne $t3, $t4, next_col
-    bne $t3, $t5, next_col
-
-    li $v0, 1
-    jr $ra
-
-next_col:
+next_line:
+    addi $t0, $t0, 3
     addi $t1, $t1, 1
-    blt $t1, 3, col_loop
+    blt $t1, 3, check_lines
 
-    # Diagonal principal (0,4,8)
-    lbu $t3, 0($t0)
-    lbu $t4, 4($t0)
-    lbu $t5, 8($t0)
+    # verifica colunas
+    la $t0, board
+    li $t1, 0
+check_cols:
+    lb $t2, 0($t0)
+    lb $t3, 3($t0)
+    lb $t4, 6($t0)
+    li $t5, '.'
+    beq $t2, $t5, next_col
+    bne $t2, $t3, next_col
+    bne $t2, $t4, next_col
+    li $v0, 1
+    jr $ra
+next_col:
+    addi $t0, $t0, 1
+    addi $t1, $t1, 1
+    blt $t1, 3, check_cols
 
-    beq $t3, $t7, check_diag2
-    bne $t3, $t4, check_diag2
-    bne $t3, $t5, check_diag2
-
+    # diagonal principal
+    la $t0, board
+    lb $t2, 0($t0)
+    lb $t3, 4($t0)
+    lb $t4, 8($t0)
+    li $t5, '.'
+    beq $t2, $t5, check_diag2
+    bne $t2, $t3, check_diag2
+    bne $t2, $t4, check_diag2
     li $v0, 1
     jr $ra
 
 check_diag2:
-    lbu $t3, 2($t0)
-    lbu $t4, 4($t0)
-    lbu $t5, 6($t0)
-
-    beq $t3, $t7, no_win
-    bne $t3, $t4, no_win
-    bne $t3, $t5, no_win
-
+    lb $t2, 2($t0)
+    lb $t3, 4($t0)
+    lb $t4, 6($t0)
+    li $t5, '.'
+    beq $t2, $t5, no_winner
+    bne $t2, $t3, no_winner
+    bne $t2, $t4, no_winner
     li $v0, 1
     jr $ra
 
-no_win:
+no_winner:
     li $v0, 0
     jr $ra
+
+
+###########################
+# CHECK TIE
+###########################
+checkTie:
+    la $t0, board
+    li $t1, 0
+tie_loop:
+    lb $t2, 0($t0)
+    li $t3, '.'
+    beq $t2, $t3, not_tie
+    addi $t0, $t0, 1
+    addi $t1, $t1, 1
+    blt $t1, 9, tie_loop
+    li $v0, 1
+    jr $ra
+not_tie:
+    li $v0, 0
+    jr $ra
+
+exit:
+    li $v0, 10
+    syscall
