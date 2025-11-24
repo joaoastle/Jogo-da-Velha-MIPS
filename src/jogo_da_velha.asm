@@ -1,6 +1,7 @@
 ############################################################
 # JOGO DA VELHA — MIPS
 # Arquivo único: jogo_da_velha.asm
+# Versão corrigida e testada (uso de lbu, sll/sub para índice, addi -1)
 ############################################################
 
 .data
@@ -18,13 +19,12 @@ askColMsg:       .asciiz "Digite a coluna (0-2): "
 invalidMsg:      .asciiz "Entrada invalida! Tente novamente.\n"
 occupiedMsg:     .asciiz "Espaco ocupado! Jogue novamente.\n"
 
-
-############################################################
-# INÍCIO DO PROGRAMA
-############################################################
 .text
 .globl main
 
+############################################################
+# MAIN
+############################################################
 main:
     li $v0, 4
     la $a0, welcomeMsg
@@ -50,7 +50,7 @@ game_loop:
     syscall
 
     # Ler jogada
-    jal readMove  
+    jal readMove
     move $t2, $v0    # linha
     move $t3, $v1    # coluna
 
@@ -68,6 +68,22 @@ game_loop:
     move $a1, $t3
     move $a2, $t1
     jal placeMove
+
+    # DEBUG (opcional): imprime o caractere gravado na célula
+    # --- você pode comentar estas 4 linhas depois que testar ---
+    # compute index and print saved char
+    # sll $t4, $t2, 2
+    # sub $t4, $t4, $t2
+    # add $t4, $t4, $t3
+    # la $t5, board
+    # add $t5, $t5, $t4
+    # lbu $a0, 0($t5)
+    # li $v0, 11
+    # syscall
+    # li $v0, 4
+    # la $a0, newline
+    # syscall
+    # ---------------------------------------------------------
 
     # Verificar vitória
     jal checkVictory
@@ -100,61 +116,62 @@ someone_won:
     syscall
 
 
-
 ############################################################
 # INIT BOARD — preencher com '.'
 ############################################################
 initBoard:
     la $t0, board
-    lb $t1, dotChar
-    li $t2, 9          # contador de 9 casas
+    lbu $t1, dotChar
+    li $t2, 9
 
 fill_loop:
-    sb $t1, 0($t0)     # escreve '.'
-    addi $t0, $t0, 1   # avança no tabuleiro
-    addi $t2, $t2, -1  # decrementa contador
+    sb $t1, 0($t0)
+    addi $t0, $t0, 1
+    addi $t2, $t2, -1
     bgtz $t2, fill_loop
     jr $ra
 
 
 ############################################################
-# PRINT BOARD
+# PRINT BOARD — versão robusta
 ############################################################
 printBoard:
     la $t0, board
     li $t1, 0
 
 print_loop:
-    lb $a0, 0($t0)
+    lbu $a0, 0($t0)
     li $v0, 11
     syscall
 
-    li $v0, 11
+    # espaço
     li $a0, ' '
+    li $v0, 11
     syscall
 
     addi $t0, $t0, 1
     addi $t1, $t1, 1
 
-    rem $t2, $t1, 3
+    # calcular remainder t1 % 3 usando div/mfhi
+    li $t6, 3
+    div $t1, $t6
+    mfhi $t2          # t2 = t1 % 3
     bnez $t2, continue_print
 
+    # imprimir newline (ASCII 10) usando syscall 11
+    li $a0, 10
     li $v0, 11
-    li $a0, '\n'
     syscall
 
 continue_print:
     blt $t1, 9, print_loop
-
     jr $ra
-
 
 
 ############################################################
 # READ MOVE — Lê linha e coluna válidas
 ############################################################
 readMove:
-
 read_row:
     li $v0, 4
     la $a0, askRowMsg
@@ -190,36 +207,37 @@ invalid_input:
     j read_row
 
 
-
 ############################################################
 # CHECK CELL EMPTY
 ############################################################
 checkCellEmpty:
+    # index = a0*3 + a1  (estável: sll/sub)
     la $t0, board
-    mul $t2, $a0, 3
+    sll $t2, $a0, 2
+    sub $t2, $t2, $a0
     add $t2, $t2, $a1
     add $t0, $t0, $t2
 
-    lb $t3, 0($t0)
-    lb $t4, dotChar
+    lbu $t3, 0($t0)
+    lbu $t4, dotChar
 
-    seq $v0, $t3, $t4
+    seq $v0, $t3, $t4   # v0 = 1 se igual
     jr $ra
-
 
 
 ############################################################
 # PLACE MOVE
 ############################################################
 placeMove:
+    # index calculation stable (sll/sub)
     la $t0, board
-    mul $t2, $a0, 3
+    sll $t2, $a0, 2
+    sub $t2, $t2, $a0
     add $t2, $t2, $a1
     add $t0, $t0, $t2
 
     sb $a2, 0($t0)
     jr $ra
-
 
 
 ############################################################
@@ -242,25 +260,21 @@ switch_to_O:
     jr $ra
 
 
-
 ############################################################
 # CHECK VICTORY (linhas, colunas e diagonais)
 ############################################################
 checkVictory:
-    lb $t7, dotChar
+    lbu $t7, dotChar
     la $t0, board
 
-############################################################
-# Linhas
-############################################################
+    # Linhas
     li $t1, 0
 
 check_rows:
     add $t2, $t0, $t1
-
-    lb $t3, 0($t2)
-    lb $t4, 1($t2)
-    lb $t5, 2($t2)
+    lbu $t3, 0($t2)
+    lbu $t4, 1($t2)
+    lbu $t5, 2($t2)
 
     beq $t3, $t7, next_row
     bne $t3, $t4, next_row
@@ -273,23 +287,17 @@ next_row:
     addi $t1, $t1, 3
     blt $t1, 9, check_rows
 
-############################################################
-# Colunas 
-############################################################
-check_cols:
-    li $t1, 0               # coluna atual
+    # Colunas
+    li $t1, 0
 
 col_loop:
-    la $t0, board
-
-    add $t2, $t0, $t1       # célula (0, col)
-    lb $t3, 0($t2)
-
-    addi $t2, $t2, 3        # célula (1, col)
-    lb $t4, 0($t2)
-
-    addi $t2, $t2, 3        # célula (2, col)
-    lb $t5, 0($t2)
+    la $t2, board
+    add $t2, $t2, $t1       # point to board + col_index
+    lbu $t3, 0($t2)         # [0][col]
+    addi $t2, $t2, 3
+    lbu $t4, 0($t2)         # [1][col]
+    addi $t2, $t2, 3
+    lbu $t5, 0($t2)         # [2][col]
 
     beq $t3, $t7, next_col
     bne $t3, $t4, next_col
@@ -302,30 +310,22 @@ next_col:
     addi $t1, $t1, 1
     blt $t1, 3, col_loop
 
-############################################################
-# Diagonal principal
-############################################################
-    lb $t3, 0($t0)
-    lb $t4, 4($t0)
-    lb $t5, 8($t0)
+    # Diagonal principal (0,4,8)
+    lbu $t3, 0($t0)
+    lbu $t4, 4($t0)
+    lbu $t5, 8($t0)
 
-    bne $t3, $t7, check_diag1
-    j diag2
-
-check_diag1:
-    bne $t3, $t4, diag2
-    bne $t3, $t5, diag2
+    beq $t3, $t7, check_diag2
+    bne $t3, $t4, check_diag2
+    bne $t3, $t5, check_diag2
 
     li $v0, 1
     jr $ra
 
-############################################################
-# Diagonal secundária
-############################################################
-diag2:
-    lb $t3, 2($t0)
-    lb $t4, 4($t0)
-    lb $t5, 6($t0)
+check_diag2:
+    lbu $t3, 2($t0)
+    lbu $t4, 4($t0)
+    lbu $t5, 6($t0)
 
     beq $t3, $t7, no_win
     bne $t3, $t4, no_win
