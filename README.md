@@ -42,7 +42,7 @@ cd Jogo-da-Velha-MIPS
 No MARS:
 
 1. File → Open  
-2. Selecione `main.asm`
+2. Selecione `jogo_da_velha.asm`
 
 ### 3. Executar
 
